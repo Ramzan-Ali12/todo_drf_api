@@ -5,6 +5,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema_view, extend_schema
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 # Make the schema view of the ToDo app
 @extend_schema_view(
@@ -42,6 +43,7 @@ from drf_spectacular.utils import extend_schema_view, extend_schema
 class TodoViewSet(viewsets.ModelViewSet):
     serializer_class = TodoSerializer
     queryset = Todo.objects.all()
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
