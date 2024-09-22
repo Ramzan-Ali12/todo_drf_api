@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "rest_framework_simplejwt",
     "djoser",
+    "users"
 ]
 
 REST_FRAMEWORK = {
@@ -57,7 +58,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10	
+    'PAGE_SIZE': 10,
 }
 
 SPECTACULAR_SETTINGS = {    
@@ -72,9 +73,20 @@ SPECTACULAR_SETTINGS = {
 }
 
 SIMPLE_JWT = {
+    'USER_ID_FIELD': 'uuid',
+    'USER_ID_CLAIM': 'user_id',
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
   }
+
+AUTH_USER_MODEL = 'users.CustomUser'
+
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'users.serializers.CustomUserCreateSerializer',  # Override default serializer
+    },
+}
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

@@ -1,20 +1,15 @@
 from django.db import models
-from django.contrib.auth.models import User
+from users.models import CustomUser, CommonModels
 
-class Todo(models.Model):
-    title = models.CharField(max_length=100, db_index=True) 
-    date = models.DateTimeField(auto_now_add=True) 
-    complete = models.BooleanField(default=False, db_index=True) 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')  
-    updated = models.DateTimeField(auto_now=True)
+class Todo(CommonModels):
+    title = models.CharField(max_length=100, db_index=True)
+    description = models.TextField()
+    completed = models.BooleanField(db_index=True, default=False)
+    user = models.ForeignKey(CustomUser, related_name="todos", on_delete=models.CASCADE)  # Add the ForeignKey to CustomUser
+
 
     class Meta:
-        ordering = ['-updated']  
-        indexes = [
-            models.Index(fields=['user', 'complete']), 
-        ]
-        verbose_name = 'To-Do'
-        verbose_name_plural = 'To-Dos'
-
+        ordering = ["-created_at"]
     def __str__(self):
         return self.title
+    
