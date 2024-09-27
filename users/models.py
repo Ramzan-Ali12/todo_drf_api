@@ -25,8 +25,8 @@ class CustomUser(AbstractUser, CommonModels):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
 
-    #USERNAME_FIELD = 'full_name'
-    #REQUIRED_FIELDS = ['full_name']  
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['full_name']  
 
     objects = CustomUserManager()  # Use the custom manager
     class Meta:

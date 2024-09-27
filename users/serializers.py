@@ -35,3 +35,5 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         if CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError("This email is already in use.")
         return value
+
+    

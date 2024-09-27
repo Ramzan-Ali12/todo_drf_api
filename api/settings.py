@@ -85,6 +85,7 @@ DJOSER = {
     'SERIALIZERS': {
         'user_create': 'users.serializers.CustomUserCreateSerializer',  # Override default serializer
     },
+    'HIDE_USERS': True,
 }
 
 
