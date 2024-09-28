@@ -1,93 +1,149 @@
 from rest_framework import permissions
 from rest_framework.decorators import action
-from rest_framework.response import Response
+# import responce
 from djoser.views import UserViewSet as DjoserUserViewSet
-from .serializers import CustomUserCreateSerializer
-from drf_spectacular.utils import extend_schema, OpenApiResponse
-from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
+from users.serializers import CustomUserCreateSerializer,CustomUserUpdateSerializer
+from users.models import CustomUser
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+
 class CustomUserViewSet(DjoserUserViewSet):
-    """
-    Custom UserViewSet to handle both user registration and the 'me' endpoint separately.
-    """
+    queryset=CustomUser.objects.all()
     serializer_class = CustomUserCreateSerializer
 
+    # me endpoints
     @extend_schema(
         tags=["me"],
         summary="GET the current authenticated user's profile",
         description="Endpoint to GET current authenticated user's profile",
-        responses={
-            200: OpenApiResponse(description="Successful Response with the authenticated user's profile")
-        },
         methods=["GET"],
     )
     @extend_schema(
         tags=["me"],
         summary="Update the current authenticated user's profile",
-        description="Endpoint to Update current authenticated user's profile full_name. NOTE: You need to provide email as well for this endpoint to work.",
-          request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'full_name': {'type': 'string'},
-                    'email': {'type': 'string', 'format': 'email'},
-                },
-                'required': ['email', 'full_name']
-            }
-        },
-        responses={
-            200: OpenApiResponse(description="Successful Response with the updated user's profile")
-        },
-        methods=["PUT"],
-    )
-    @extend_schema(
-        tags=["me"],
-        summary="Update the current authenticated user's profile",
-        description="Endpoint to Update current authenticated user's profile full_name.",
-          request={
-            'application/json': {
-                'type': 'object',
-                'properties': {
-                    'full_name': {'type': 'string'},
-                    'email': {'type': 'string', 'format': 'email'},
-                },
-                'required': ['email', 'full_name']
-            }
-        },
-        responses={
-            200: OpenApiResponse(description="Successful Response with the updated user's profile"),
-            204: OpenApiResponse(description="Profile successfully deleted.")
-        },
-        methods=["PATCH"],
+        description="Endpoint to Update current authenticated user's profile (full_name and email required).",
+        request=CustomUserUpdateSerializer,
+        methods=["PUT", "PATCH"],
     )
     @action(
-        methods=['get', 'put', 'patch'], 
+        methods=['get', 'put', 'patch'],
         detail=False,
         permission_classes=[permissions.IsAuthenticated],
-        url_path='me'
     )
     def me(self, request, *args, **kwargs):
+        # Call the inherited me() method from DjoserUserViewSet
         return super().me(request, *args, **kwargs)
-        
+
+
+# Auth Operations endpoints
+
+    # Override other Djoser endpoints and tag them under 'auth'
+    @extend_schema(
+        tags=["auth"],
+        summary="List Registered Users",
+        description="Endpoint to List registered users."
+        )
+    def list(self, request, *args, **kwargs):
+        # List users (admin access)
+        return super().list(request, *args, **kwargs)
+    
+    @extend_schema(
+        tags=["auth"],
+        summary="Create new user",
+        description="Endpoint to create new user"
+        )
+    def create(self, request, *args, **kwargs):
+        # Create a new user
+        return super().create(request, *args, **kwargs)
+    
+    @extend_schema(tags=["auth"],summary="Get User Profile",description="Endpoint to get user profile.")
+    def retrieve(self, request, *args, **kwargs):
+        # Retrieve user profile by uuid
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=["auth"],
+        summary="Update users profile",
+        description="Endpoint to Update user profile full_name. NOTE: You need to provide email as well for this endpoint to work.",
+        request=CustomUserUpdateSerializer,
+        )
+    def update(self, request, *args, **kwargs):
+        self.serializer_class=CustomUserUpdateSerializer
+        return super().update(request,*args,**kwargs)
+    
+    @extend_schema(
+        tags=["auth"],
+        summary="Endpoint to update user profile",
+        description="Endpoint to Update user profile full_name.",
+        request=CustomUserUpdateSerializer,
+        )
+    def partial_update(self, request, *args, **kwargs):
+        # Partial update user profile (PATCH)
+        self.serializer_class=CustomUserUpdateSerializer
+        return super().partial_update(request,*args,**kwargs)
+
+    @extend_schema(
+        tags=["auth"],
+        summary="Activate user account using `uid` and `token`",
+        description="Endpoint to Activate User account using `uid` and `token` generated on register or using `/resend_activation/` resource.",
+    )
+    def activation(self, request, *args, **kwargs):
+        return super().activation(request, *args, **kwargs)
+    
+    @extend_schema(
+        tags=["auth"],
+        summary="Generate and send activation `uid` and `token` for User account.",
+        description="Endpoint to Generate and send activation `uid` and `token` for User account.",
+    )
+    def resend_activation(self, request, *args, **kwargs):
+        return super().resend_activation(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=["auth"],
+        summary="send password reset email",
+        description="Endpoint to Send password reset email using current user email",
+    )
+    def reset_password(self, request, *args, **kwargs):
+        return super().reset_password(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=["auth"],
+        summary="Reset password using `uid` and `token`",
+        description="Endpoint to Reset password using `uid` and `token` generated by `/reset_password/` resource for current authenticated user."
+        )
+    def reset_password_confirm(self, request, *args, **kwargs):
+        return super().reset_password_confirm(request, *args, **kwargs)
+
+    @extend_schema(
+        tags=["auth"],
+        summary="Change user password.",
+        description="Endpoint to Change user password using current password.",
+    )
+    def change_password(self, request, *args, **kwargs):
+        return super().change_password(request, *args, **kwargs)
+
+    
+
+# JWT api endpoints
 @extend_schema(
-    summary="generate access and refresh tokens for specific set of credentials",
-    description="Takes a set of user credentials and returns an access and refresh JSON web token pair to prove the authentication of those credentials.",
+    summary="Generate access and refresh tokens",
+    description="Takes a set of user credentials and returns an access and refresh JSON web token pair.",
     tags=["jwt"],
 )
 class CustomTokenObtainPairView(TokenObtainPairView):
     pass
 
 @extend_schema(
-    summary="regenerate access token given valid refresh token",
-    description="Takes a valid refresh type JSON web token and returns an access type JSON web token if the refresh token is valid.",
+    summary="Refresh access token",
+    description="Takes a valid refresh token and returns a new access token.",
     tags=["jwt"],
 )
 class CustomTokenRefreshView(TokenRefreshView):
     pass
 
 @extend_schema(
-    summary="verify access token is valid",
-    description="Takes a token and indicates if it is valid. This view provides no information about a token's fitness for a particular use.",
+    summary="Verify access token validity",
+    description="Verifies if a given token is valid.",
     tags=["jwt"],
 )
 class CustomTokenVerifyView(TokenVerifyView):

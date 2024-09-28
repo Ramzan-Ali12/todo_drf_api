@@ -6,17 +6,17 @@ import logging
 logger = logging.getLogger(__name__)
 
 class CustomUserCreateSerializer(UserCreateSerializer):
-    password = serializers.CharField(write_only=True)  # Ensure password is write-only
-    
+    password = serializers.CharField(write_only=True, required=False)  
+
     class Meta(UserCreateSerializer.Meta):
         model = CustomUser
-        fields = ('uuid', 'email', 'full_name', 'password','created_at', 'updated_at')  # Add/modify fields as needed
-    
+        fields = ('uuid', 'email', 'full_name', 'password', 'created_at', 'updated_at')  
+
     def create(self, validated_data):
         try:
             # Set full_name as the username
             username = validated_data['full_name']
-            
+            logger.info(f"Creating user with username: {username}")
             # Create user with full_name as username, and other required fields
             user = CustomUser(
                 email=validated_data['email'],
@@ -36,4 +36,9 @@ class CustomUserCreateSerializer(UserCreateSerializer):
             raise serializers.ValidationError("This email is already in use.")
         return value
 
-    
+# users/serializers.py
+class CustomUserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('uuid', 'email', 'full_name', 'created_at', 'updated_at')
+        read_only_fields = ('uuid', 'created_at', 'updated_at')
