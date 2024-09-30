@@ -1,8 +1,10 @@
-from rest_framework import serializers
-from djoser.serializers import UserCreateSerializer
+from rest_framework import serializers,fields
+from djoser.serializers import UserCreateSerializer,PasswordResetConfirmSerializer
+from djoser.utils import decode_uid
 from users.models import CustomUser
+from django.contrib.auth import get_user_model
 import logging
-
+User=get_user_model()
 logger = logging.getLogger(__name__)
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -42,3 +44,36 @@ class CustomUserUpdateSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('uuid', 'email', 'full_name', 'created_at', 'updated_at')
         read_only_fields = ('uuid', 'created_at', 'updated_at')
+
+class CustomPasswordResetConfirmSerializer(serializers.Serializer):
+    
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+    re_new_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        # Check if both passwords match
+        if attrs['new_password'] != attrs['re_new_password']:
+            raise serializers.ValidationError({"new_password": [_("Passwords must match.")]})
+        return attrs
+    
+    # save the new password
+    def save(self):
+        # Decode the UID and retrieve the user
+        try:
+            uid = decode_uid(self.validated_data['uid'])
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            raise serializers.ValidationError({"uid": _("Invalid UID or User not found.")})
+        
+        # Set the new password and save the user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+
+class GoogleLoginSerializer(serializers.Serializer):
+    access_token = serializers.CharField(required=True)
+    code=serializers.CharField(required=True)
+    id_token = serializers.CharField(required=True)
+    class Meta:
+        fields = ['access_token', 'code', 'id_token']

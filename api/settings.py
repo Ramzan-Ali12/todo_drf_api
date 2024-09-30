@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "rest_framework_simplejwt",
     "djoser",
-    "users"
+    "users",
+    "social_django"
 ]
 
 REST_FRAMEWORK = {
@@ -83,11 +84,34 @@ AUTH_USER_MODEL = 'users.CustomUser'
 
 DJOSER = {
     'SERIALIZERS': {
-        'user_create': 'users.serializers.CustomUserCreateSerializer',  # Override default serializer
+        'user_create': 'users.serializers.CustomUserCreateSerializer',  # Your custom serializer
+       # 'password_reset': 'users.serializers.CustomPasswordResetSerializer',
     },
     'HIDE_USERS': True,
+    'PASSWORD_RESET_CONFIRM_URL': 'auth/users/reset_password_confirm/{uid}/{token}/',
+    'PASSWORD_RESET_CONFIRM_RETYPE': True,  # Optional: Retype password on confirmation
+    'PASSWORD_RESET_SHOW_EMAIL_NOT_FOUND': True,  # Optional: Show email not found error
+    'PASSWORD_RESET_TOKEN_EXPIRE_HOURS': 24, 
 }
 
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',  # Google OAuth2
+    'django.contrib.auth.backends.ModelBackend',  # Default backend
+)
+# configure Google OAuth2
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET =os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+
+# add namespace
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+
+# Configure SMTP server
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -97,6 +121,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "social_django.middleware.SocialAuthExceptionMiddleware",
+    
 ]
 
 ROOT_URLCONF = "api.urls"

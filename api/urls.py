@@ -10,4 +10,5 @@ urlpatterns = [
     path('docs/', SpectacularSwaggerView.as_view(url_name='openapi-schema'), name='docs-ui'),    
     # Todo-related endpoints under "api/v1/todo/"
     path("api/v1/todo/", include("todo.urls")),
+    
 ]
