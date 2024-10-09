@@ -95,12 +95,13 @@ DJOSER = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',  # Google OAuth2
     'django.contrib.auth.backends.ModelBackend',  # Default backend
+    'social_core.backends.google.GoogleOAuth2',  # Google OAuth2
 )
 # configure Google OAuth2
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET =os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET')
+GOOGLE_OAUTH_CALLBACK_URL = "http://localhost:8000/api/v1/auth/google/callback/"
 
 # add namespace
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
@@ -112,6 +113,27 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+# Authenticate if local account with this email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+# Connect local account and social account if local account with that email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "client_id": os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_KEY'),
+                "secret": os.environ.get('SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET'),
+                "key": "",
+            },
+        ],
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

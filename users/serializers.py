@@ -3,7 +3,10 @@ from djoser.serializers import UserCreateSerializer,PasswordResetConfirmSerializ
 from djoser.utils import decode_uid
 from users.models import CustomUser
 from django.contrib.auth import get_user_model
+# import settings
+from django.conf import settings
 import logging
+import requests
 User=get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -17,21 +20,20 @@ class CustomUserCreateSerializer(UserCreateSerializer):
     def create(self, validated_data):
         try:
             # Set full_name as the username
-            username = validated_data['full_name']
-            logger.info(f"Creating user with username: {username}")
             # Create user with full_name as username, and other required fields
             user = CustomUser(
                 email=validated_data['email'],
                 full_name=validated_data['full_name'],
-                username=username,  # Set full_name as the username
             )
             user.set_password(validated_data['password'])
             user.save()
             return user  # Ensure the created user is returned
         except Exception as e:
             logger.error(f"Error creating user: {e}")
-            raise serializers.ValidationError("An error occurred while creating the user.")  # Return a validation error
-
+            raise serializers.ValidationError("An error occurred while creating the user.")
+    def update(self, instance, validated_data):
+        # Placeholder for update logic
+        return super().update(instance, validated_data)
     def validate_email(self, value):
         # Custom validation to ensure email is unique
         if CustomUser.objects.filter(email=value).exists():
@@ -71,9 +73,25 @@ class CustomPasswordResetConfirmSerializer(serializers.Serializer):
         user.set_password(self.validated_data['new_password'])
         user.save()
 
-class GoogleLoginSerializer(serializers.Serializer):
+class GoogleSocialAuthSerializer(serializers.Serializer):
     access_token = serializers.CharField(required=True)
     code=serializers.CharField(required=True)
     id_token = serializers.CharField(required=True)
     class Meta:
         fields = ['access_token', 'code', 'id_token']
+
+    def validate_access_token(self, value):
+        # Validate the access token by sending a request to Google
+        google_token_info_url = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
+        response = requests.get(f'{google_token_info_url}?access_token={value}')
+        
+        if response.status_code != 200:
+            raise serializers.ValidationError("Invalid access token")
+
+        token_info = response.json()
+
+        # Validate that the token audience matches the app's Google client ID
+        if token_info.get('aud') != settings.SOCIAL_AUTH_GOOGLE_OAUTH2_KEY:
+            raise serializers.ValidationError("Invalid token audience")
+        
+        return value

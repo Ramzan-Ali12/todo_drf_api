@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CustomUserViewSet, CustomTokenObtainPairView, CustomTokenRefreshView, CustomTokenVerifyView, GoogleLoginView
+from .views import CustomUserViewSet, CustomTokenObtainPairView, CustomTokenRefreshView, CustomTokenVerifyView, GoogleLoginView, LoginPage
 
 # Router for user-related actions (including the 'me' endpoint)
 router = DefaultRouter()
@@ -22,4 +22,6 @@ urlpatterns = [
     path('auth/users/reset_password_confirm/', CustomUserViewSet.as_view({'post': 'reset_password_confirm'}), name='reset_password_confirm'),
     path('auth/users/set_password/', CustomUserViewSet.as_view({'post': 'set_password'}), name='set_password'),
     path('auth/social/google/', GoogleLoginView.as_view(),name='social'),
+    path('auth/login/google/', LoginPage.as_view(), name='login_page'),  # Login page with Google button
+
 ]
